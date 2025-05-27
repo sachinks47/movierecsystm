@@ -1,5 +1,5 @@
 # movierecsystm
-Movie Recommendation Project-Data Science
+Movie Recommendation Project- Data Science
 
 This project was done during my 2 months Data Science course offered by TechMaghi
 
