@@ -37,9 +37,4 @@ The system leverages interactive widgets to allow users to choose genres, rating
 * `TopNPopularMovies(genre, threshold, topN)`: Lists top N popular movies based on average ratings and number of reviews.
 * `recommendation_genre(movie_df, similarity_matrix, movie_title, topN)`: Generates content-based recommendations.
 
-### 🚀 How to Run
-
-1. Load the datasets `movies.csv` and `ratings.csv`.
-2. Execute all cells in the Jupyter Notebook.
-3. Use the dropdown widgets to interact with the recommender system.
 
