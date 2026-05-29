@@ -7,3 +7,4 @@ scikit-learn==1.4.2
 python-dotenv==1.0.1
 Werkzeug==3.0.3
 psycopg2-binary
+requests==2.31.0
