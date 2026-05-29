@@ -16,7 +16,7 @@ The system leverages interactive widgets to allow users to choose genres, rating
 * Content-based filtering using TF-IDF vectorization of movie genres.
 * Cosine similarity to measure content closeness.
 * Interactive controls via `ipywidgets` for real-time recommendation generation.
-
+h
 ### 🛠️ Libraries Used
 
 * **pandas**: Data loading, manipulation, and aggregation.
