@@ -15,12 +15,19 @@ import requests
 # We moved the OMDb fetcher directly into app.py to prevent Vercel ModuleNotFound errors
 def fetch_omdb(title, api_key=None):
     if not api_key:
-        api_key = os.environ.get('OMDB_API_KEY')
+        api_key = OMDB_API_KEY
         
     if not api_key or api_key == "MISSING_KEY":
         return None
         
-    url = f"http://www.omdbapi.com/?t={title}&apikey={api_key}"
+    # Clean the title: Datasets often include the year in the title, e.g., "Toy Story (1995)"
+    # The OMDb API will fail if we don't remove the year.
+    clean_title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)
+    
+    # URL-encode the title to handle spaces and special characters safely
+    encoded_title = urllib.parse.quote(clean_title)
+        
+    url = f"https://www.omdbapi.com/?t={encoded_title}&apikey={api_key}"
     
     try:
         response = requests.get(url)
@@ -33,12 +40,17 @@ def fetch_omdb(title, api_key=None):
             raw_votes = data.get('imdbVotes', '0')
             votes = int(raw_votes.replace(',', '')) if raw_votes != 'N/A' else 0
             
+            # Convert 'N/A' posters to None to trigger the HTML fallback correctly
+            poster = data.get('Poster')
+            if poster == 'N/A':
+                poster = None
+            
             return {
                 'title': data.get('Title'),
                 'year': data.get('Year'),
                 'imdb_rating': rating,
                 'imdb_votes': votes,
-                'poster': data.get('Poster'),
+                'poster': poster,
                 'plot': data.get('Plot'),
                 'genre': data.get('Genre')
             }
