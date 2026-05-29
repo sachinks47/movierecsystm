@@ -10,9 +10,42 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+import requests
 
-# Import our custom OMDb API utility
-from utils.omdb import fetch_movie_details as fetch_omdb
+# We moved the OMDb fetcher directly into app.py to prevent Vercel ModuleNotFound errors
+def fetch_omdb(title, api_key=None):
+    if not api_key:
+        api_key = os.environ.get('OMDB_API_KEY')
+        
+    if not api_key or api_key == "MISSING_KEY":
+        return None
+        
+    url = f"http://www.omdbapi.com/?t={title}&apikey={api_key}"
+    
+    try:
+        response = requests.get(url)
+        data = response.json()
+        
+        if data.get('Response') == 'True':
+            raw_rating = data.get('imdbRating', '0')
+            rating = float(raw_rating) if raw_rating != 'N/A' else 0.0
+            
+            raw_votes = data.get('imdbVotes', '0')
+            votes = int(raw_votes.replace(',', '')) if raw_votes != 'N/A' else 0
+            
+            return {
+                'title': data.get('Title'),
+                'year': data.get('Year'),
+                'imdb_rating': rating,
+                'imdb_votes': votes,
+                'poster': data.get('Poster'),
+                'plot': data.get('Plot'),
+                'genre': data.get('Genre')
+            }
+    except Exception as e:
+        print(f"OMDb API Error: {e}")
+        
+    return None
 
 # ==========================================
 # 1. LOAD ENV VARIABLES
@@ -22,7 +55,9 @@ load_dotenv()
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 if not OMDB_API_KEY:
-    raise ValueError("CRITICAL ERROR: OMDB_API_KEY is missing from .env file! Please add it to start the server.")
+    # Changed from 'raise ValueError' to prevent the whole server from crashing
+    print("WARNING: OMDB_API_KEY is missing! OMDb API calls will fail.")
+    OMDB_API_KEY = "MISSING_KEY"
 
 # ==========================================
 # 2. APP CONFIGURATION & SETUP
