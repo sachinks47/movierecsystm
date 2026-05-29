@@ -40,7 +40,11 @@ if db_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 else:
     # Fallback to local SQLite for local testing
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), 'database.db')
+    # Vercel's filesystem is read-only. We must use /tmp if the database falls back to SQLite
+    if os.environ.get('VERCEL'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/database.db'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), 'database.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -383,7 +387,13 @@ def logout():
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('index'))
 
+# --- SERVERLESS INITIALIZATION ---
+# Vercel imports the app, it doesn't run it via `python app.py`. 
+# Therefore, we must initialize the DB and datasets outside the __main__ block.
+with app.app_context(): 
+    db.create_all()
+
+load_datasets()
+
 if __name__ == '__main__':
-    with app.app_context(): db.create_all()
-    load_datasets()
     app.run(debug=True, port=5000)
