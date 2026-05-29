@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecFlix | Premium AI Discovery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { brand: '#e50914', darkbg: '#0a0f1c', cardbg: '#141b2d', imdb: '#f5c518' } } }
+        }
+    </script>
+    <style>
+        body { background-color: #0a0f1c; }
+        .toast { transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0f1c; }
+        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+        .loader { border: 3px solid rgba(245,197,24,0.2); border-bottom-color: #f5c518; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col font-sans antialiased">
+    <!-- Navbar -->
+    <nav class="bg-cardbg/90 backdrop-blur-lg border-b border-gray-800 shadow-2xl sticky top-0 z-[50]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="/" class="text-2xl font-black text-brand tracking-tighter flex items-center gap-2 transition hover:scale-105 transform">
+                    <i class="fa-solid fa-play"></i> RecFlix
+                </a>
+                <div class="flex items-center space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <span class="text-sm text-gray-400 hidden sm:block">Hi, <span class="font-bold text-white">{{ current_user.username }}</span></span>
+                        <a href="/logout" class="text-gray-300 hover:text-white px-3 py-2 text-sm font-semibold transition">Logout</a>
+                    {% else %}
+                        <a href="/login" class="text-gray-300 hover:text-white px-3 py-2 text-sm font-semibold transition">Login</a>
+                        <a href="/register" class="bg-brand hover:bg-red-700 px-5 py-2 rounded-md text-sm font-bold text-white transition shadow-lg shadow-brand/30 hover:-translate-y-0.5 transform">Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if using_dummy_data %}
+    <div class="bg-orange-600 text-white text-center py-2 px-4 font-bold text-sm shadow-md">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i> Local dataset not found. Generating simulated library data.
+    </div>
+    {% endif %}
+
+    <!-- Top Level Z-Index for Toasts -->
+    <div id="toast-container" class="fixed top-20 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Flash Messages Handler -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => showToast("{{ message }}", "{{ category }}"));
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <main class="flex-grow w-full pb-12">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="bg-cardbg border-t border-gray-800 py-10 text-center text-gray-500 text-sm mt-auto">
+        <p>&copy; 2026 RecFlix - Integrated with OMDb API.</p>
+    </footer>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-600' : 'bg-emerald-600';
+            const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-check-circle';
+            
+            toast.className = `toast ${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 opacity-0 translate-y-[-20px] scale-95 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i> <span class="font-semibold">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'scale-95');
+                toast.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+            });
+            
+            // Animate Out & Remove
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0', 'scale-100');
+                toast.classList.add('opacity-0', 'translate-y-[-20px]', 'scale-95');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

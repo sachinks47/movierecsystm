@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Blurred Backdrop Graphic -->
+<div class="absolute top-0 left-0 w-full h-[60vh] z-0 overflow-hidden pointer-events-none">
+    <div class="absolute inset-0 bg-darkbg/85 backdrop-blur-3xl z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-darkbg to-darkbg z-20"></div>
+    <img src="{{ movie.poster if movie.poster and movie.poster != 'N/A' else '/static/popcorn.png' }}" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1e293b/ffffff?text=Poster+Unavailable';" class="w-full h-full object-cover opacity-20 mix-blend-luminosity transform scale-110 filter blur-xl">
+</div>
+
+<div class="relative z-30 pt-10">
+    <div class="bg-cardbg/60 backdrop-blur-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-gray-700/50">
+        <div class="flex flex-col lg:flex-row">
+            <!-- Left: Poster -->
+            <div class="w-full lg:w-1/3 p-8 md:p-12 flex flex-col items-center justify-center">
+                <div class="relative rounded-2xl overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.6)] w-full max-w-sm border border-gray-700 group">
+                    <img src="{{ movie.poster if movie.poster and movie.poster != 'N/A' else '/static/popcorn.png' }}" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1e293b/ffffff?text=Poster+Unavailable';" alt="{{ movie.title }}" class="w-full h-auto object-cover group-hover:scale-105 transition duration-700">
+                </div>
+            </div>
+            
+            <!-- Right: Rich Details -->
+            <div class="w-full lg:w-2/3 p-8 md:p-12 lg:pl-0 flex flex-col justify-center">
+                
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <span class="bg-imdb text-black px-3 py-1 rounded text-xs font-black uppercase tracking-wider shadow-sm">OMDb Record</span>
+                    <span class="text-gray-300 font-mono text-sm bg-gray-800 px-2 py-1 rounded border border-gray-700">{{ movie.year }}</span>
+                </div>
+
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-8 leading-tight tracking-tight drop-shadow-md">{{ movie.omdb_title if movie.omdb_title else movie.title }}</h1>
+                
+                <div class="flex flex-wrap items-center gap-8 mb-10 bg-gray-900/60 p-5 rounded-2xl border border-gray-800/60 inline-flex shadow-inner">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-imdb/10 rounded-full flex items-center justify-center border border-imdb/30 shadow-[0_0_15px_rgba(245,197,24,0.15)]">
+                            <i class="fa-solid fa-star text-imdb text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-black text-2xl leading-none">
+                                {{ "%.1f"|format(movie.imdb_rating) }}<span class="text-sm text-gray-500 font-normal">/10</span>
+                            </p>
+                            <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">IMDb Rating</p>
+                        </div>
+                    </div>
+                    
+                    <div class="w-px h-12 bg-gray-700 mx-2 hidden sm:block"></div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-gray-800 rounded-full flex items-center justify-center border border-gray-700 shadow-inner">
+                            <i class="fa-solid fa-users text-gray-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-black text-2xl leading-none">{{ "{:,}".format(movie.imdb_votes) }}</p>
+                            <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">IMDb Votes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="text-white font-bold mb-3 text-lg border-b border-gray-800 pb-2 inline-block">The Plot</h3>
+                <p class="text-gray-300 text-base md:text-lg leading-relaxed max-w-3xl font-light mb-10 text-justify">
+                    {{ movie.plot }}
+                </p>
+
+                <h3 class="text-white font-bold mb-3 text-sm uppercase tracking-widest text-gray-500">Genres</h3>
+                <div class="flex flex-wrap gap-2.5 mb-12">
+                    {% for genre in movie.omdb_genre.split(', ') %}
+                        <span class="px-5 py-2 bg-gray-800/80 text-gray-200 border border-gray-700/80 rounded-full text-sm font-bold shadow-sm cursor-default">{{ genre }}</span>
+                    {% endfor %}
+                </div>
+                
+                <!-- Interaction Zone -->
+                <div class="bg-gradient-to-r from-gray-900 to-transparent p-6 rounded-2xl border border-gray-800 border-l-4 border-l-imdb max-w-lg shadow-xl">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Your Rating Profile</h3>
+                    {% if current_user.is_authenticated %}
+                        <div class="flex items-center gap-3 text-3xl text-gray-600 star-rating" id="star-container">
+                            {% for i in range(1, 6) %}
+                                <i class="fa-solid fa-star cursor-pointer hover:text-imdb hover:scale-125 transition-transform duration-200" 
+                                   data-rating="{{ i }}" 
+                                   onclick="submitRating({{ movie.movieId }}, {{ i }})"
+                                   onmouseover="highlightStars({{ i }})"
+                                   onmouseout="resetStars()"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="text-sm font-bold mt-4" id="rating-status">
+                            {% if user_rating %} 
+                                <span class="text-emerald-400 bg-emerald-400/10 px-4 py-1.5 rounded-full border border-emerald-400/20"><i class="fa-solid fa-check-circle mr-1.5"></i> Saved: {{ user_rating }} Stars</span>
+                            {% else %} 
+                                <span class="text-gray-500">Tap a star to log to your AI profile.</span>
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <p class="text-gray-400 text-sm"><a href="/login" class="text-black bg-imdb hover:bg-yellow-500 px-6 py-2.5 rounded-xl font-black transition-all inline-flex items-center gap-2 shadow-lg shadow-imdb/20 transform hover:-translate-y-0.5"><i class="fa-solid fa-lock text-black/60"></i> Login to Rate</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRating = {{ user_rating if user_rating else 0 }};
+    const stars = document.querySelectorAll('.star-rating i');
+
+    function highlightStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('text-imdb', 'drop-shadow-[0_0_12px_rgba(245,197,24,0.6)]');
+                star.classList.remove('text-gray-600');
+            } else {
+                star.classList.remove('text-imdb', 'drop-shadow-[0_0_12px_rgba(245,197,24,0.6)]');
+                star.classList.add('text-gray-600');
+            }
+        });
+    }
+
+    function resetStars() { highlightStars(currentRating); }
+    resetStars();
+
+    function submitRating(movieId, rating) {
+        fetch('/rate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ movie_id: movieId, rating: rating })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                showToast(`Successfully logged ${rating} star rating!`, 'success');
+                currentRating = rating;
+                document.getElementById('rating-status').innerHTML = `<span class="text-emerald-400 bg-emerald-400/10 px-4 py-1.5 rounded-full border border-emerald-400/20"><i class="fa-solid fa-check-circle mr-1.5"></i> Saved: ${rating} Stars</span>`;
+                resetStars();
+            } else {
+                showToast(data.message || 'Error saving rating', 'error');
+            }
+        });
+    }
+</script>
+{% endblock %}

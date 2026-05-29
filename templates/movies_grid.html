@@ -1,0 +1,16 @@
+{% if movies %}
+    {% for movie in movies %}
+        {% include 'movie_card.html' %}
+    {% endfor %}
+{% else %}
+    <div class="col-span-full bg-cardbg p-12 md:p-20 rounded-3xl text-center border border-gray-800 shadow-2xl flex flex-col items-center">
+        <div class="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <i class="fa-solid fa-satellite-dish text-5xl text-gray-500 animate-pulse"></i>
+        </div>
+        <h3 class="text-2xl md:text-3xl text-white mb-3 font-black tracking-tight">No Matches Found</h3>
+        <p class="text-gray-400 max-w-lg leading-relaxed">Our algorithm couldn't find a match with these strict filters. Try lowering the rating threshold or selecting more genres.</p>
+        <button onclick="document.querySelector('button[type=reset]').click(); fetchRecommendations();" class="mt-6 px-6 py-2 border border-gray-600 text-gray-300 rounded-full hover:bg-gray-800 hover:text-white transition font-bold text-sm">
+            Clear Filters
+        </button>
+    </div>
+{% endif %}

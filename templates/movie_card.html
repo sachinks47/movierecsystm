@@ -1,0 +1,51 @@
+<div class="group relative flex flex-col h-full bg-cardbg rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:shadow-[0_15px_40px_rgba(245,197,24,0.15)] hover:-translate-y-2 border border-gray-800/60 cursor-pointer" onclick="window.location.href='/movie/{{ movie.movieId }}'">
+    
+    <div class="aspect-[2/3] w-full bg-gray-900 relative overflow-hidden">
+        <!-- Bulletproof Image Fallback Logic Updated to 'Poster Unavailable' -->
+        <img src="{{ movie.poster if movie.poster and movie.poster != 'N/A' else '/static/popcorn.png' }}" 
+             onerror="this.onerror=null;this.src='https://placehold.co/400x600/1e293b/ffffff?text=Poster+Unavailable';" 
+             alt="{{ movie.title }}" 
+             loading="lazy" 
+             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100">
+        
+        <!-- Subtle Top Gradient -->
+        <div class="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent z-10"></div>
+        
+        <!-- OMDb Rating Badge -->
+        <div class="absolute top-2.5 right-2.5 bg-black/80 backdrop-blur-md text-imdb text-xs font-bold px-2 py-1 rounded border border-imdb/30 shadow-lg flex items-center gap-1.5 z-20">
+            <span class="bg-imdb text-black px-1 rounded-sm text-[8px] uppercase tracking-wider font-black">IMDb</span> 
+            <i class="fa-solid fa-star text-[9px]"></i> {{ "%.1f"|format(movie.imdb_rating) }}
+        </div>
+        
+        <!-- Match Badge -->
+        {% if movie.similarity %}
+        <div class="absolute top-2.5 left-2.5 bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded shadow-lg z-20 shadow-blue-500/30">
+            {{ "%.0f"|format(movie.similarity * 100) }}% MATCH
+        </div>
+        {% endif %}
+        
+        <!-- Bottom Gradient for Text Legibility -->
+        <div class="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent z-10"></div>
+        
+        <!-- Overlay Details inside the Poster -->
+        <div class="absolute inset-x-0 bottom-0 p-4 z-20 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button class="w-full bg-imdb hover:bg-yellow-400 text-black py-2 rounded-lg text-xs font-black transition-colors flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,197,24,0.4)]">
+                <i class="fa-solid fa-circle-info"></i> View Details
+            </button>
+        </div>
+    </div>
+    
+    <!-- Info Container -->
+    <div class="p-4 bg-cardbg flex flex-col flex-grow z-20 relative">
+        <h3 class="font-black text-[15px] text-white leading-tight mb-1 line-clamp-1" title="{{ movie.omdb_title if movie.omdb_title else movie.title }}">{{ movie.omdb_title if movie.omdb_title else movie.title }}</h3>
+        
+        <div class="flex items-center justify-between text-[11px] text-gray-400 font-semibold mb-2.5">
+            <span class="bg-gray-800 border border-gray-700 px-1.5 py-0.5 rounded text-gray-300">{{ movie.year }}</span>
+            <span class="truncate ml-2 text-gray-500">{{ movie.omdb_genre.split(',')[0] if movie.omdb_genre else 'Movie' }}</span>
+        </div>
+        
+        <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed font-light mt-auto">
+            {{ movie.plot }}
+        </p>
+    </div>
+</div>

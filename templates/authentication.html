@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-[75vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-cardbg/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] border border-gray-700 overflow-hidden relative">
+        
+        <!-- Decorative Gradient Blob -->
+        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-imdb/10 to-transparent"></div>
+
+        <div class="p-8 pt-10 text-center border-b border-gray-800 relative z-10">
+            <div class="w-20 h-20 bg-imdb/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-imdb/30 shadow-[0_0_30px_rgba(245,197,24,0.2)]">
+                <i class="fa-solid fa-user-astronaut text-3xl text-imdb"></i>
+            </div>
+            <h2 class="text-3xl font-black text-white tracking-tight">{{ title }}</h2>
+            <p class="text-sm text-gray-400 mt-2 font-medium">Access your AI profile and saved ratings.</p>
+        </div>
+        
+        <div class="p-8 relative z-10">
+            <form method="POST" action="{{ request.path }}" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Username</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-at absolute left-4 top-4 text-gray-500"></i>
+                        <input type="text" name="username" required class="block w-full pl-11 pr-4 py-3.5 border border-gray-700 rounded-xl leading-5 bg-darkbg text-white placeholder-gray-600 focus:outline-none focus:border-imdb focus:ring-1 focus:ring-imdb transition shadow-inner font-medium">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-500 mb-2 uppercase tracking-widest">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-4 text-gray-500"></i>
+                        <input type="password" name="password" required class="block w-full pl-11 pr-4 py-3.5 border border-gray-700 rounded-xl leading-5 bg-darkbg text-white placeholder-gray-600 focus:outline-none focus:border-imdb focus:ring-1 focus:ring-imdb transition shadow-inner font-medium">
+                    </div>
+                </div>
+                <button type="submit" class="w-full flex justify-center py-4 px-4 rounded-xl text-sm font-black text-black bg-imdb hover:bg-yellow-400 transition-all duration-300 shadow-[0_0_20px_rgba(245,197,24,0.3)] hover:shadow-[0_0_30px_rgba(245,197,24,0.5)] transform hover:-translate-y-1 mt-6 tracking-wide">
+                    {{ title }} Securely <i class="fa-solid fa-arrow-right ml-2 mt-0.5"></i>
+                </button>
+            </form>
+            
+            <div class="mt-8 text-center text-sm text-gray-500 font-medium">
+                {% if request.path == '/login' %}
+                    New here? <a href="/register" class="text-white hover:text-imdb transition border-b border-dashed border-gray-600 hover:border-imdb">Create an account</a>
+                {% else %}
+                    Already have an account? <a href="/login" class="text-white hover:text-imdb transition border-b border-dashed border-gray-600 hover:border-imdb">Log in</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

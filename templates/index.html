@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Hero Banner -->
+<div class="relative bg-black border-b border-gray-800 overflow-hidden shadow-2xl">
+    <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-darkbg via-transparent to-transparent"></div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 text-center lg:text-left">
+        <h1 class="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight drop-shadow-lg">Discover <span class="text-imdb drop-shadow-[0_0_15px_rgba(245,197,24,0.5)]">Masterpieces</span>.</h1>
+        <p class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl font-light drop-shadow-md mx-auto lg:mx-0">Powered by OMDb API & Advanced Recommendation Engines.</p>
+        
+        <!-- Toggle Tabs -->
+        <div class="inline-flex bg-cardbg/80 backdrop-blur-md rounded-xl p-1.5 border border-gray-700 shadow-2xl">
+            <!-- Popular is now the secondary tab initially -->
+            <button onclick="switchTab('popularity')" id="tab-btn-popularity" class="tab-btn px-8 py-3 rounded-lg text-sm font-bold transition-all text-gray-400 hover:text-white flex items-center gap-2 transform hover:scale-105">
+                <i class="fa-solid fa-fire"></i> Popular
+            </button>
+            <!-- AI Match is now the active tab initially -->
+            <button onclick="switchTab('content')" id="tab-btn-content" class="tab-btn active px-8 py-3 rounded-lg text-sm font-bold transition-all bg-imdb text-black shadow-lg flex items-center gap-2 transform hover:scale-105">
+                <i class="fa-solid fa-brain"></i> AI Match
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
+    <!-- Advanced Filtering Panel -->
+    <div class="bg-cardbg/95 rounded-2xl border border-gray-700 shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-14 backdrop-blur-2xl">
+        <form id="filterForm" class="p-6 md:p-8">
+            <input type="hidden" id="active_tab" name="active_tab" value="content">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
+                <!-- Left: Mode Specific -->
+                <div class="col-span-1 lg:col-span-4 space-y-6">
+                    <!-- AI Content Section (Visible Default) -->
+                    <div id="content_target_container" class="space-y-5 transition-all duration-300">
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2">Target Movie Reference</h3>
+                        <div class="relative">
+                            <label class="block text-sm text-gray-300 mb-2 font-bold">Search Title <span class="text-imdb">*</span></label>
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-4 top-3.5 text-gray-500"></i>
+                                <input type="text" id="target_title" name="target_title" placeholder="e.g. Inception..." class="w-full bg-darkbg border border-gray-700 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none focus:border-imdb focus:ring-1 focus:ring-imdb shadow-inner transition" autocomplete="off">
+                            </div>
+                            <div id="autocomplete-results" class="absolute z-50 w-full bg-gray-800 border border-gray-700 rounded-xl mt-2 shadow-2xl hidden max-h-60 overflow-y-auto divide-y divide-gray-700 overflow-hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-2 font-bold flex justify-between">
+                                <span>Similarity Threshold</span> <span id="sim_val" class="text-imdb bg-imdb/10 px-2 py-0.5 rounded-md font-mono">10%</span>
+                            </label>
+                            <input type="range" id="similarity" name="similarity" min="0" max="100" value="10" class="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-imdb" oninput="document.getElementById('sim_val').innerText = this.value + '%'">
+                        </div>
+                    </div>
+
+                    <!-- Popularity Section (Hidden Default) -->
+                    <div id="popularity_intro_container" class="hidden space-y-4 transition-all duration-300">
+                        <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2">Global Discovery</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed font-medium">Explore the most beloved classics globally. Tweak the rating and year metrics below to refine results.</p>
+                    </div>
+
+                    <div class="space-y-5 pt-2">
+                        <div>
+                            <label class="block text-sm text-gray-300 mb-2 font-bold">Sort Order</label>
+                            <div class="relative">
+                                <select name="sort_by" id="sort_by" class="w-full bg-darkbg border border-gray-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-imdb shadow-inner appearance-none cursor-pointer font-medium">
+                                    <option value="similarity" id="opt_sim" selected>AI Similarity Match</option>
+                                    <option value="popularity">Most Popular (Internal Votes)</option>
+                                    <option value="rating">Highest Rated (Internal)</option>
+                                    <option value="latest">Newest Releases</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-gray-500 pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle: Sliders -->
+                <div class="col-span-1 lg:col-span-4 space-y-6">
+                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2">Metrics</h3>
+                    
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2 font-bold flex justify-between items-center">
+                            <span>Min Rating</span> <span id="rating_val" class="text-imdb bg-imdb/10 px-2 py-0.5 rounded-md font-black flex items-center gap-1 shadow-sm">3.0 <i class="fa-solid fa-star text-[10px]"></i></span>
+                        </label>
+                        <input type="range" name="min_rating" min="0" max="5" step="0.1" value="3.0" class="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-imdb" oninput="document.getElementById('rating_val').innerHTML = this.value + ' <i class=\\\'fa-solid fa-star text-[10px]\\\'></i>'">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2 font-bold">Min Reviews</label>
+                        <input type="number" name="min_reviews" id="min_reviews" value="0" min="0" class="w-full bg-darkbg border border-gray-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-imdb shadow-inner font-mono">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-300 mb-2 font-bold">Release Timeline</label>
+                        <div class="flex items-center gap-3">
+                            <input type="number" name="year_min" value="1980" placeholder="From" class="w-1/2 bg-darkbg border border-gray-700 rounded-xl py-3 px-4 text-center text-white focus:outline-none focus:border-imdb shadow-inner font-mono">
+                            <span class="text-gray-600 font-black">-</span>
+                            <input type="number" name="year_max" value="2026" placeholder="To" class="w-1/2 bg-darkbg border border-gray-700 rounded-xl py-3 px-4 text-center text-white focus:outline-none focus:border-imdb shadow-inner font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Genres -->
+                <div class="col-span-1 lg:col-span-4 flex flex-col h-full">
+                    <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest border-b border-gray-800 pb-2 mb-4">Filter By Genres</h3>
+                    <div class="flex-grow max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="flex flex-wrap gap-2">
+                            {% for g in all_genres %}
+                            <label class="cursor-pointer group">
+                                <input type="checkbox" name="genres" value="{{ g }}" class="peer sr-only">
+                                <span class="inline-block px-4 py-2 text-xs font-bold text-gray-400 bg-gray-800 border border-gray-700 rounded-full peer-checked:bg-imdb peer-checked:text-black peer-checked:border-imdb hover:text-white hover:bg-gray-700 transition-all duration-200 shadow-sm peer-checked:shadow-[0_0_12px_rgba(245,197,24,0.4)]">
+                                    {{ g }}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-10 flex flex-col sm:flex-row justify-end items-center gap-4 border-t border-gray-800 pt-6">
+                <button type="reset" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-bold text-gray-400 bg-transparent hover:bg-gray-800 border border-gray-700 transition">Clear Filters</button>
+                
+                <button type="button" id="generate-btn" onclick="fetchRecommendations()" class="w-full sm:w-auto px-10 py-3.5 rounded-xl text-sm font-black text-black bg-imdb hover:bg-yellow-500 shadow-[0_0_20px_rgba(245,197,24,0.4)] transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                    <span id="btn-text"><i class="fa-solid fa-play mr-1"></i> Generate Results</span>
+                    <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Filtered Results Grid -->
+    <h2 class="text-2xl font-black text-white mb-6 border-b border-gray-800 pb-3 flex items-center gap-3">
+        <i class="fa-solid fa-film text-imdb"></i> Filter Results
+    </h2>
+    <div id="results-section" class="relative min-h-[400px]">
+        <div id="loading-spinner" class="absolute inset-0 bg-darkbg/80 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center rounded-2xl border border-gray-800 transition-all duration-300">
+            <span class="loader w-14 h-14 mb-4 shadow-[0_0_15px_rgba(245,197,24,0.5)] rounded-full"></span>
+            <p class="text-imdb font-bold tracking-widest text-sm uppercase animate-pulse">Running Engine...</p>
+        </div>
+        
+        <div id="movies-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8">
+            <!-- Populated via AJAX -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(mode) {
+        document.getElementById('active_tab').value = mode;
+        const btnPop = document.getElementById('tab-btn-popularity');
+        const btnCon = document.getElementById('tab-btn-content');
+        
+        if (mode === 'popularity') {
+            btnPop.className = "tab-btn active px-8 py-3 rounded-lg text-sm font-bold transition-all bg-imdb text-black shadow-lg flex items-center gap-2 transform hover:scale-105";
+            btnCon.className = "tab-btn px-8 py-3 rounded-lg text-sm font-bold transition-all text-gray-400 hover:text-white flex items-center gap-2 transform hover:scale-105";
+            document.getElementById('content_target_container').classList.add('hidden');
+            document.getElementById('popularity_intro_container').classList.remove('hidden');
+            document.getElementById('opt_sim').classList.add('hidden');
+            document.getElementById('sort_by').value = 'popularity';
+            document.getElementById('min_reviews').value = "50";
+        } else {
+            btnCon.className = "tab-btn active px-8 py-3 rounded-lg text-sm font-bold transition-all bg-imdb text-black shadow-lg flex items-center gap-2 transform hover:scale-105";
+            btnPop.className = "tab-btn px-8 py-3 rounded-lg text-sm font-bold transition-all text-gray-400 hover:text-white flex items-center gap-2 transform hover:scale-105";
+            document.getElementById('content_target_container').classList.remove('hidden');
+            document.getElementById('popularity_intro_container').classList.add('hidden');
+            document.getElementById('opt_sim').classList.remove('hidden');
+            document.getElementById('sort_by').value = 'similarity';
+            document.getElementById('min_reviews').value = "0"; 
+        }
+    }
+
+    const searchInput = document.getElementById('target_title');
+    const resultsBox = document.getElementById('autocomplete-results');
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+        if(query.length < 2) { resultsBox.classList.add('hidden'); return; }
+        
+        fetch(`/api/autocomplete?q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+                resultsBox.innerHTML = '';
+                if(data.length > 0) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = "px-4 py-3 hover:bg-gray-700 cursor-pointer text-sm text-gray-200 font-medium transition flex items-center gap-3";
+                        div.innerHTML = `<i class="fa-solid fa-film text-gray-500"></i> ${item.title}`;
+                        div.onclick = () => {
+                            searchInput.value = item.title;
+                            resultsBox.classList.add('hidden');
+                        };
+                        resultsBox.appendChild(div);
+                    });
+                    resultsBox.classList.remove('hidden');
+                } else {
+                    resultsBox.classList.add('hidden');
+                }
+            });
+    });
+    document.addEventListener('click', (e) => { if(!searchInput.contains(e.target)) resultsBox.classList.add('hidden'); });
+
+    function fetchRecommendations() {
+        try {
+            const form = document.getElementById('filterForm');
+            if (!form) return;
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.genres = formData.getAll('genres');
+
+            if (data.active_tab === 'content' && (!data.target_title || !data.target_title.trim())) {
+                showToast("Target movie title required for AI Content matching.", "error");
+                searchInput.focus();
+                return;
+            }
+
+            const spinner = document.getElementById('loading-spinner');
+            const container = document.getElementById('movies-container');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+            const btn = document.getElementById('generate-btn');
+            
+            if(spinner) spinner.classList.remove('hidden');
+            btn.disabled = true;
+            btnText.innerText = "Processing...";
+            btnSpinner.classList.remove('hidden');
+            
+            fetch('/api/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Network response error");
+                return response.text();
+            })
+            .then(html => { 
+                if(container) container.innerHTML = html; 
+            })
+            .catch(err => { 
+                console.error(err);
+                showToast("Error connecting to Recommendation Engine.", "error"); 
+            })
+            .finally(() => { 
+                if(spinner) spinner.classList.add('hidden'); 
+                btn.disabled = false;
+                btnText.innerHTML = `<i class="fa-solid fa-play mr-1"></i> Generate Results`;
+                btnSpinner.classList.add('hidden');
+            });
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            showToast("An unexpected error occurred.", "error");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => fetchRecommendations());
+</script>
+{% endblock %}
