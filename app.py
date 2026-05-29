@@ -72,6 +72,13 @@ if db_url:
     # SQLAlchemy requires the URL to start with 'postgresql://' instead of 'postgres://'
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
+    # Neon Serverless Postgres strictly requires SSL. We must append it if missing.
+    if "?" not in db_url:
+        db_url += "?sslmode=require"
+    elif "sslmode=" not in db_url:
+        db_url += "&sslmode=require"
+        
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 else:
     # Fallback to local SQLite for local testing
